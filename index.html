@@ -1,2521 +1,575 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>家族工单 · 多家族管理</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        html {
-            font-size: 10px;
-        }
-        body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: #f4f1ed;
-            padding: 1.2rem 1rem 2rem;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            color: #1f1c18;
-        }
-        .app {
-            max-width: 1100px;
-            width: 100%;
-            background: #ffffff;
-            border-radius: 2.4rem;
-            box-shadow: 0 1.2rem 2.4rem rgba(0,0,0,0.05);
-            padding: 1.8rem 1.4rem 2rem;
-        }
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-            margin-bottom: 0.4rem;
-        }
-        .header-row h1 {
-            font-size: 2rem;
-            font-weight: 600;
-        }
-        .family-switcher {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem 0.8rem;
-            align-items: center;
-            background: #f0ebe5;
-            padding: 0.3rem 0.8rem 0.3rem 1.2rem;
-            border-radius: 4rem;
-        }
-        .family-switcher label {
-            font-size: 1.2rem;
-            font-weight: 500;
-            color: #3b3530;
-        }
-        .family-switcher select {
-            border: 1px solid #ddd3c9;
-            border-radius: 4rem;
-            padding: 0.3rem 1.2rem;
-            font-size: 1.2rem;
-            background: white;
-            min-width: 100px;
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237b6e62' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-            padding-right: 3rem;
-            cursor: pointer;
-        }
-        .family-switcher select:focus {
-            border-color: #b7a797;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(160, 140, 125, 0.15);
-        }
-        .family-switcher .btn-add-family {
-            background: #d6cbbc;
-            border: none;
-            border-radius: 4rem;
-            padding: 0.3rem 1.2rem;
-            font-size: 1.2rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.1s;
-            white-space: nowrap;
-        }
-        .family-switcher .btn-add-family:hover {
-            background: #cbbfb4;
-        }
-        .family-switcher .btn-del-family {
-            background: #f0e0d8;
-            border: none;
-            border-radius: 4rem;
-            padding: 0.3rem 1.2rem;
-            font-size: 1.2rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.1s;
-            color: #7a4a3a;
-            white-space: nowrap;
-        }
-        .family-switcher .btn-del-family:hover {
-            background: #e6cdc0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学生考号生成器</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: #f0f2f5; margin: 0; padding: 15px; color: #333;
+    font-size: 14px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { text-align: center; color: #1a73e8; margin-bottom: 5px; font-size: 20px; }
+  .subtitle { text-align: center; color: #888; margin-bottom: 20px; font-size: 12px; }
 
-        .nav-tabs {
-            display: flex;
-            gap: 0.6rem;
-            margin-bottom: 2rem;
-            border-bottom: 1.5px solid #e3dbd2;
-            padding-bottom: 0.6rem;
-            flex-wrap: wrap;
-        }
-        .nav-tab {
-            background: transparent;
-            border: none;
-            padding: 0.6rem 1.6rem;
-            font-size: 1.3rem;
-            font-weight: 500;
-            color: #5f554b;
-            border-radius: 4rem;
-            cursor: pointer;
-            transition: 0.15s;
-            background: #f0ebe5;
-            flex: 0 1 auto;
-        }
-        .nav-tab.active {
-            background: #d6cbc0;
-            color: #1f1b16;
-            font-weight: 600;
-        }
-        .nav-tab:hover {
-            background: #e3dad1;
-        }
-        .nav-tab.migrate-tab {
-            background: #e0d8ce;
-            color: #3b3530;
-        }
-        .nav-tab.migrate-tab.active {
-            background: #b8a898;
-            color: #ffffff;
-        }
-        .nav-tab.migrate-tab:hover {
-            background: #cbbfb4;
-        }
-        .tab-content {
-            display: none;
-            animation: fade 0.2s ease;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        @keyframes fade {
-            from { opacity: 0.5; }
-            to { opacity: 1; }
-        }
-        .card {
-            background: #fbf9f7;
-            border-radius: 1.8rem;
-            padding: 1.4rem 1.4rem 1.8rem;
-            border: 1px solid #eae2da;
-            margin-bottom: 1.8rem;
-        }
-        .card h3 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2f2a24;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.4rem 1rem;
-            border-bottom: 1px dashed #d9cfc4;
-            padding-bottom: 0.6rem;
-            margin-bottom: 1.2rem;
-        }
-        .card h3 button {
-            background: #e4dbd2;
-            border: none;
-            font-size: 1.2rem;
-            padding: 0.3rem 1.2rem;
-            border-radius: 3rem;
-            font-weight: 500;
-            color: #2b241e;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .card h3 button:hover {
-            background: #d2c6ba;
-        }
-        .family-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem 1.8rem;
-            background: #f7f3ef;
-            padding: 1rem 1.4rem;
-            border-radius: 1.8rem;
-            margin-bottom: 2rem;
-            align-items: center;
-        }
-        .family-meta label {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem 0.8rem;
-            flex-wrap: wrap;
-            font-size: 1.3rem;
-            font-weight: 500;
-            color: #3b3530;
-            flex: 1 1 200px;
-        }
-        .family-meta input,
-        .family-meta textarea {
-            border: 1px solid #ddd3c9;
-            border-radius: 4rem;
-            padding: 0.4rem 1.2rem;
-            font-size: 1.3rem;
-            background: white;
-            transition: 0.15s;
-            min-width: 120px;
-            flex: 1;
-        }
-        .family-meta textarea {
-            border-radius: 1.6rem;
-            min-height: 4rem;
-            resize: vertical;
-        }
-        .family-meta input:focus,
-        .family-meta textarea:focus {
-            border-color: #b7a797;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(160, 140, 125, 0.15);
-        }
-        .family-stats {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem 0.8rem;
-            padding: 0.2rem 1.2rem;
-            background: #e8e0d8;
-            border-radius: 4rem;
-            font-size: 1.3rem;
-            font-weight: 500;
-            color: #2f2a24;
-            flex-shrink: 0;
-            margin-left: auto;
-        }
-        .family-stats .stat-number {
-            font-weight: 700;
-            font-size: 1.6rem;
-            color: #1f1c18;
-            background: white;
-            padding: 0.05rem 1rem;
-            border-radius: 4rem;
-            min-width: 28px;
-            text-align: center;
-        }
-        .group-block {
-            background: white;
-            border-radius: 1.6rem;
-            padding: 0.8rem 1.2rem 1.2rem;
-            margin-bottom: 1rem;
-            border: 1px solid #e8dfd6;
-        }
-        .group-header {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.4rem 0.8rem;
-            font-weight: 600;
-            font-size: 1.4rem;
-            color: #2a241f;
-        }
-        .group-header .del-group {
-            background: none;
-            border: none;
-            font-size: 1.6rem;
-            color: #8f7e6e;
-            cursor: pointer;
-            margin-left: auto;
-            padding: 0 0.2rem;
-        }
-        .group-header .del-group:hover {
-            color: #b33;
-        }
-        .identity-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem 0.8rem;
-            margin-top: 0.6rem;
-        }
-        .identity-chip {
-            background: #ede7df;
-            padding: 0.2rem 1rem 0.2rem 1.2rem;
-            border-radius: 4rem;
-            font-size: 1.2rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem 0.8rem;
-            flex-wrap: wrap;
-        }
-        .custom-select {
-            position: relative;
-            display: inline-block;
-            font-size: 1.1rem;
-            min-width: 50px;
-        }
-        .custom-select select {
-            appearance: none;
-            -webkit-appearance: none;
-            width: 100%;
-            padding: 0.1rem 2rem 0.1rem 0.8rem;
-            border: 1px solid #ccc0b4;
-            border-radius: 4rem;
-            background: white;
-            font-size: 1.1rem;
-            cursor: pointer;
-            font-family: inherit;
-            color: #2a241f;
-            min-height: 2.4rem;
-        }
-        .custom-select::after {
-            content: "▾";
-            position: absolute;
-            right: 0.6rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #7b6e62;
-            font-size: 1rem;
-            pointer-events: none;
-        }
-        .identity-chip .del-id {
-            cursor: pointer;
-            font-size: 1.4rem;
-            opacity: 0.5;
-            transition: 0.1s;
-        }
-        .identity-chip .del-id:hover {
-            opacity: 1;
-            color: #b33;
-        }
-        .add-identity-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-top: 0.6rem;
-        }
-        .add-identity-row input {
-            flex: 1;
-            min-width: 80px;
-            border: 1px solid #ddd3c9;
-            border-radius: 4rem;
-            padding: 0.3rem 1.2rem;
-            font-size: 1.2rem;
-            background: white;
-        }
-        .add-identity-row button {
-            background: #ddd3c9;
-            border: none;
-            border-radius: 4rem;
-            padding: 0.3rem 1.4rem;
-            font-size: 1.2rem;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .add-identity-row button:hover {
-            background: #cec1b4;
-        }
+  .card {
+    background: #fff; border-radius: 10px; padding: 16px;
+    margin-bottom: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  }
+  .card h2 {
+    font-size: 15px; margin: 0 0 12px; color: #1a73e8;
+    border-left: 4px solid #1a73e8; padding-left: 10px;
+  }
 
-        .filter-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem 1.2rem;
-            margin-bottom: 1.2rem;
-            align-items: center;
-            background: #f7f3ef;
-            padding: 0.8rem 1.2rem;
-            border-radius: 1.6rem;
-        }
-        .filter-bar label {
-            font-size: 1.2rem;
-            font-weight: 500;
-            color: #3b3530;
-        }
-        .filter-bar .custom-select {
-            min-width: 120px;
-            flex: 0 1 180px;
-        }
-        .filter-bar .custom-select select {
-            padding: 0.4rem 2.4rem 0.4rem 1.2rem;
-            font-size: 1.2rem;
-            min-height: 3.2rem;
-            border-radius: 4rem;
-            background: white;
-            border: 1px solid #ddd3c9;
-            width: 100%;
-        }
-        .filter-bar .custom-select::after {
-            right: 1rem;
-            font-size: 1.2rem;
-        }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .field { display: flex; align-items: center; gap: 6px; }
+  .field label { font-size: 13px; white-space: nowrap; }
+  input[type="text"], input[type="number"] {
+    padding: 7px 10px; border: 1px solid #ccc; border-radius: 6px;
+    font-size: 14px; width: 80px;
+  }
+  input[type="file"] { font-size: 13px; width: 100%; }
 
-        .member-item {
-            background: white;
-            border-radius: 1.6rem;
-            padding: 0.8rem 1rem;
-            margin-bottom: 0.8rem;
-            border: 1px solid #e6ddd4;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .member-item:hover {
-            background: #f7f3ef;
-            border-color: #cdbfb2;
-        }
-        .member-row {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.4rem 0.8rem;
-            pointer-events: none;
-        }
-        .member-row .member-id {
-            font-size: 0.9rem;
-            color: #8a7a6a;
-            background: #f0ebe5;
-            padding: 0.05rem 0.8rem;
-            border-radius: 4rem;
-            min-width: 40px;
-            text-align: center;
-        }
-        .member-row .member-name {
-            font-weight: 600;
-            font-size: 1.4rem;
-            min-width: 50px;
-        }
-        .member-row .member-role {
-            font-size: 1.2rem;
-            color: #5f554b;
-            background: #ede7df;
-            padding: 0.1rem 1.2rem;
-            border-radius: 4rem;
-        }
-        .member-row .member-level {
-            font-size: 1rem;
-            background: #d6cbbc;
-            padding: 0.1rem 0.8rem;
-            border-radius: 4rem;
-            color: #2f281f;
-        }
-        .member-row .rec-count {
-            font-size: 1.1rem;
-            color: #7b6e62;
-            margin-left: auto;
-        }
-        .add-member-form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-top: 1rem;
-            align-items: center;
-        }
-        .add-member-form input {
-            border: 1px solid #ddd3c9;
-            border-radius: 4rem;
-            padding: 0.4rem 1.2rem;
-            font-size: 1.2rem;
-            background: white;
-            flex: 1 0 100px;
-        }
-        .add-member-form .custom-select {
-            flex: 1 0 140px;
-            min-width: 120px;
-        }
-        .add-member-form .custom-select select {
-            padding: 0.4rem 2.4rem 0.4rem 1.2rem;
-            font-size: 1.2rem;
-            min-height: 3.6rem;
-            border-radius: 4rem;
-            background: white;
-            border: 1px solid #ddd3c9;
-            width: 100%;
-        }
-        .add-member-form .custom-select::after {
-            right: 1rem;
-            font-size: 1.2rem;
-        }
-        .add-member-form button {
-            background: #ddd3c9;
-            border: none;
-            border-radius: 4rem;
-            padding: 0.4rem 1.6rem;
-            font-weight: 500;
-            font-size: 1.2rem;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        .add-member-form button:hover {
-            background: #cec1b4;
-        }
-        .save-indicator {
-            text-align: right;
-            font-size: 1rem;
-            color: #8c7d6e;
-            margin-top: 1.2rem;
-            border-top: 1px solid #e3dbd2;
-            padding-top: 0.6rem;
-        }
+  button {
+    padding: 9px 18px; border: none; border-radius: 6px;
+    font-size: 14px; cursor: pointer; transition: 0.2s;
+  }
+  .btn-primary { background: #1a73e8; color: #fff; }
+  .btn-primary:hover { background: #1557b0; }
+  .btn-success { background: #34a853; color: #fff; }
+  .btn-success:hover { background: #2a8a44; }
+  .btn-danger { background: #ea4335; color: #fff; padding: 5px 10px; font-size: 13px; }
+  .btn-danger:hover { background: #c5221f; }
+  .btn-sm { padding: 6px 14px; font-size: 13px; }
+  button:disabled { background: #ccc !important; cursor: not-allowed; }
 
-        /* 数据迁移页 */
-        .migrate-section {
-            display: flex;
-            flex-direction: column;
-            gap: 1.6rem;
-        }
-        .migrate-box {
-            background: #f7f3ef;
-            border-radius: 1.8rem;
-            padding: 1.4rem 1.6rem 1.8rem;
-            border: 1px solid #eae2da;
-        }
-        .migrate-box h4 {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: #2f2a24;
-            margin-bottom: 0.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-        .migrate-box p {
-            font-size: 1.2rem;
-            color: #6a5f54;
-            margin-bottom: 1rem;
-        }
-        .migrate-box .migrate-btn-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-top: 0.4rem;
-        }
-        .migrate-box .migrate-btn-group button {
-            border: none;
-            border-radius: 4rem;
-            padding: 0.5rem 2rem;
-            font-size: 1.3rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .migrate-box .migrate-btn-group .btn-export {
-            background: #b8a898;
-            color: #ffffff;
-        }
-        .migrate-box .migrate-btn-group .btn-export:hover {
-            background: #a89888;
-        }
-        .migrate-box .migrate-btn-group .btn-import {
-            background: #7ab870;
-            color: #ffffff;
-        }
-        .migrate-box .migrate-btn-group .btn-import:hover {
-            background: #5a9a50;
-        }
-        .migrate-box .migrate-btn-group .btn-copy {
-            background: #d6cbbc;
-            color: #2f2a24;
-        }
-        .migrate-box .migrate-btn-group .btn-copy:hover {
-            background: #cbbfb4;
-        }
-        .migrate-box .migrate-code-area {
-            margin-top: 1rem;
-            position: relative;
-        }
-        .migrate-box .migrate-code-area textarea {
-            width: 100%;
-            min-height: 60px;
-            max-height: 150px;
-            padding: 0.8rem 1.2rem;
-            border: 1px solid #ddd3c9;
-            border-radius: 1.2rem;
-            font-size: 1.1rem;
-            font-family: 'Courier New', monospace;
-            background: white;
-            resize: vertical;
-            color: #1f1c18;
-            word-break: break-all;
-        }
-        .migrate-box .migrate-code-area textarea:focus {
-            border-color: #b7a797;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(160, 140, 125, 0.15);
-        }
-        .migrate-box .migrate-code-area textarea::placeholder {
-            color: #b0a898;
-            font-family: system-ui;
-        }
-        .migrate-box .migrate-status {
-            margin-top: 0.8rem;
-            font-size: 1.2rem;
-            padding: 0.4rem 1rem;
-            border-radius: 4rem;
-            min-height: 3.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .migrate-box .migrate-status.success {
-            background: #e8f5e4;
-            color: #1f4a1a;
-            border: 1px solid #b8d9b0;
-        }
-        .migrate-box .migrate-status.error {
-            background: #fde8e4;
-            color: #7a2a1a;
-            border: 1px solid #f0c8c0;
-        }
-        .migrate-box .migrate-status.info {
-            background: #e8ecf0;
-            color: #2a3a4a;
-            border: 1px solid #c0c8d0;
-        }
-        .migrate-box .migrate-status.empty {
-            background: #f0ebe5;
-            color: #7b6e62;
-            border: 1px solid #e3dbd2;
-        }
+  #roomList { display: flex; flex-direction: column; gap: 8px; }
+  .room-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; background: #f8f9fa; border-radius: 6px;
+    flex-wrap: wrap;
+  }
+  .room-item span { font-size: 13px; min-width: 65px; }
+  .room-item input { width: 70px; }
 
-        .detail-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.35);
-            backdrop-filter: blur(2px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 1.2rem;
-        }
-        .detail-overlay.open {
-            display: flex;
-        }
-        .detail-panel {
-            background: #ffffff;
-            border-radius: 2.4rem;
-            max-width: 600px;
-            width: 100%;
-            padding: 1.8rem 1.6rem 2rem;
-            box-shadow: 0 2.4rem 4.8rem rgba(0, 0, 0, 0.15);
-            position: relative;
-            max-height: 95vh;
-            overflow-y: auto;
-        }
-        .detail-panel .close-detail {
-            position: absolute;
-            top: 1rem;
-            right: 1.4rem;
-            background: none;
-            border: none;
-            font-size: 2.4rem;
-            color: #8f7e6e;
-            cursor: pointer;
-            line-height: 1;
-            padding: 0.2rem;
-        }
-        .detail-panel .close-detail:hover {
-            color: #b33;
-        }
-        .detail-panel .detail-title {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #1f1c18;
-            border-bottom: 2px solid #e3dbd2;
-            padding-bottom: 0.6rem;
-            margin-bottom: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding-right: 2.4rem;
-        }
-        .detail-field {
-            display: flex;
-            padding: 0.4rem 0;
-            border-bottom: 1px solid #f0ebe5;
-            font-size: 1.3rem;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.4rem;
-        }
-        .detail-field .label {
-            width: 70px;
-            font-weight: 500;
-            color: #5f554b;
-            flex-shrink: 0;
-            font-size: 1.2rem;
-        }
-        .detail-field .value {
-            flex: 1;
-            color: #1f1c18;
-            font-size: 1.3rem;
-            word-break: break-word;
-        }
-        .detail-field .custom-select {
-            flex: 1;
-            min-width: 100px;
-        }
-        .detail-field .custom-select select {
-            padding: 0.3rem 2.4rem 0.3rem 1.2rem;
-            font-size: 1.2rem;
-            min-height: 3.2rem;
-            border-radius: 4rem;
-            background: white;
-            border: 1px solid #ddd3c9;
-            width: 100%;
-        }
-        .detail-field .custom-select::after {
-            right: 1rem;
-            font-size: 1.2rem;
-        }
-        .detail-field .btn-change-role {
-            background: #d6cbbc;
-            border: none;
-            border-radius: 4rem;
-            padding: 0.2rem 1rem;
-            font-size: 1.1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.1s;
-            white-space: nowrap;
-        }
-        .detail-field .btn-change-role:hover {
-            background: #cbbfb4;
-        }
-        .detail-records {
-            margin-top: 1.2rem;
-            background: #f7f3ef;
-            border-radius: 1.4rem;
-            padding: 0.8rem 1rem;
-        }
-        .detail-records h4 {
-            font-size: 1.3rem;
-            font-weight: 500;
-            color: #3b3530;
-            margin-bottom: 0.6rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .rec-card {
-            background: white;
-            border-radius: 1.2rem;
-            padding: 0.6rem 0.8rem;
-            margin-bottom: 0.5rem;
-            border-left: 4px solid #d6cbbc;
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            transition: 0.1s;
-        }
-        .rec-card.reward {
-            border-left-color: #5a9a50;
-            background: #f2f9ef;
-        }
-        .rec-card.punish {
-            border-left-color: #c06050;
-            background: #fdf2ef;
-        }
-        .rec-card.other {
-            border-left-color: #b0a898;
-            background: #f8f6f2;
-        }
-        .rec-card.role-log {
-            border-left-color: #8a7aaa;
-            background: #f4f0f8;
-        }
-        .rec-card .rec-top {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.3rem 0.6rem;
-        }
-        .rec-card .rec-time {
-            font-size: 0.95rem;
-            color: #7b6e62;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-        .rec-card .rec-log-time {
-            font-size: 0.85rem;
-            color: #8a7a6a;
-            background: #f0ebe5;
-            padding: 0.05rem 0.6rem;
-            border-radius: 4rem;
-            white-space: nowrap;
-        }
-        .rec-card .rec-tag {
-            font-size: 0.8rem;
-            padding: 0.05rem 0.8rem;
-            border-radius: 4rem;
-            font-weight: 500;
-            white-space: nowrap;
-            margin-left: auto;
-        }
-        .rec-card .rec-tag.reward {
-            background: #b8d9b0;
-            color: #1f4a1a;
-        }
-        .rec-card .rec-tag.punish {
-            background: #f0c8c0;
-            color: #7a2a1a;
-        }
-        .rec-card .rec-tag.other {
-            background: #d6cbbc;
-            color: #2f281f;
-        }
-        .rec-card .rec-tag.role-log {
-            background: #d0c8e0;
-            color: #3a2a5a;
-        }
-        .rec-card .rec-text {
-            font-size: 1.2rem;
-            color: #1f1c18;
-            word-break: break-word;
-            line-height: 1.4;
-        }
-        .rec-card .rec-del {
-            background: none;
-            border: none;
-            color: #b0a090;
-            font-size: 1.4rem;
-            cursor: pointer;
-            padding: 0 0.2rem;
-            line-height: 1;
-            transition: 0.1s;
-        }
-        .rec-card .rec-del:hover {
-            color: #b33;
-        }
+  #status, #genStatus {
+    padding: 10px 14px; border-radius: 6px; font-size: 13px;
+    margin-top: 10px; display: none;
+  }
+  .status-ok { background: #e6f4ea; color: #137333; display: block !important; }
+  .status-warn { background: #fef7e0; color: #b06000; display: block !important; }
+  .status-err { background: #fce8e6; color: #c5221f; display: block !important; }
 
-        .detail-actions {
-            display: flex;
-            gap: 0.8rem;
-            margin-top: 1.4rem;
-            flex-wrap: wrap;
-        }
-        .detail-actions button {
-            background: #e4dbd2;
-            border: none;
-            border-radius: 4rem;
-            padding: 0.4rem 1.6rem;
-            font-size: 1.2rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .detail-actions button:hover {
-            background: #d2c6ba;
-        }
-        .detail-actions .del-member-btn {
-            background: #f0e0d8;
-            color: #7a4a3a;
-            margin-left: auto;
-        }
-        .detail-actions .del-member-btn:hover {
-            background: #e6cdc0;
-        }
+  .table-wrap { overflow-x: auto; max-height: 60vh; overflow-y: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th, td { border: 1px solid #e0e0e0; padding: 6px 8px; text-align: center; white-space: nowrap; }
+  th { background: #1a73e8; color: #fff; position: sticky; top: 0; }
+  tr:nth-child(even) { background: #f8f9fa; }
 
-        .log-type-selector {
-            display: flex;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-            margin: 0.6rem 0;
-        }
-        .log-type-selector .type-btn {
-            padding: 0.3rem 1.2rem;
-            border-radius: 4rem;
-            border: 2px solid #ddd3c9;
-            background: white;
-            font-size: 1.2rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .log-type-selector .type-btn.active {
-            border-color: #8f7e6e;
-            background: #ede7df;
-        }
-        .log-type-selector .type-btn.reward {
-            border-color: #7ab870;
-            color: #1f6a1a;
-        }
-        .log-type-selector .type-btn.reward.active {
-            background: #b8d9b0;
-            border-color: #5a9a50;
-        }
-        .log-type-selector .type-btn.punish {
-            border-color: #d08070;
-            color: #7a2a1a;
-        }
-        .log-type-selector .type-btn.punish.active {
-            background: #f0c8c0;
-            border-color: #c06050;
-        }
-        .log-type-selector .type-btn.other {
-            border-color: #c0b8a8;
-            color: #4a4038;
-        }
-        .log-type-selector .type-btn.other.active {
-            background: #d6cbbc;
-            border-color: #b0a898;
-        }
+  .summary { font-size: 13px; color: #555; margin-top: 8px; }
+  .hidden { display: none; }
+  .tip { font-size: 12px; color: #888; margin-top: 6px; }
+  .warn-text { color: #ea4335; }
 
-        .log-detail-input {
-            display: none;
-            margin-top: 0.6rem;
-            padding: 0.6rem 1rem;
-            background: #f7f3ef;
-            border-radius: 1.2rem;
-            flex-wrap: wrap;
-            gap: 0.6rem;
-            align-items: center;
-        }
-        .log-detail-input.show {
-            display: flex;
-        }
-        .log-detail-input label {
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: #3b3530;
-            min-width: 50px;
-        }
-        .log-detail-input input {
-            border: 1px solid #ddd3c9;
-            border-radius: 4rem;
-            padding: 0.3rem 1rem;
-            font-size: 1.2rem;
-            background: white;
-            flex: 1;
-            min-width: 80px;
-        }
-
-        .custom-dialog-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(2px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            padding: 1.6rem;
-        }
-        .custom-dialog-overlay.open {
-            display: flex;
-        }
-        .custom-dialog {
-            background: #ffffff;
-            border-radius: 2rem;
-            max-width: 400px;
-            width: 100%;
-            padding: 1.8rem 1.6rem 1.6rem;
-            box-shadow: 0 2.4rem 4.8rem rgba(0, 0, 0, 0.2);
-            text-align: center;
-        }
-        .custom-dialog .dialog-title {
-            font-size: 1.6rem;
-            font-weight: 600;
-            color: #1f1c18;
-            margin-bottom: 0.6rem;
-        }
-        .custom-dialog .dialog-msg {
-            font-size: 1.3rem;
-            color: #3b3530;
-            margin-bottom: 1.4rem;
-            line-height: 1.5;
-            word-break: break-word;
-        }
-        .custom-dialog .dialog-input {
-            width: 100%;
-            border: 1px solid #ddd3c9;
-            border-radius: 4rem;
-            padding: 0.6rem 1.2rem;
-            font-size: 1.3rem;
-            margin-bottom: 1.2rem;
-            outline: none;
-        }
-        .custom-dialog .dialog-input:focus {
-            border-color: #b7a797;
-            box-shadow: 0 0 0 3px rgba(160, 140, 125, 0.15);
-        }
-        .custom-dialog .dialog-btns {
-            display: flex;
-            gap: 0.8rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        .custom-dialog .dialog-btns button {
-            border: none;
-            border-radius: 4rem;
-            padding: 0.5rem 2.4rem;
-            font-size: 1.3rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.1s;
-            min-width: 72px;
-        }
-        .custom-dialog .dialog-btns .btn-confirm {
-            background: #d6cbc0;
-            color: #1f1b16;
-        }
-        .custom-dialog .dialog-btns .btn-confirm:hover {
-            background: #cbbfb4;
-        }
-        .custom-dialog .dialog-btns .btn-cancel {
-            background: #f0ebe5;
-            color: #5f554b;
-        }
-        .custom-dialog .dialog-btns .btn-cancel:hover {
-            background: #e3dad1;
-        }
-
-        @media (max-width: 480px) {
-            .app {
-                padding: 1rem 0.6rem;
-            }
-            .header-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .family-switcher {
-                flex-wrap: wrap;
-                padding: 0.6rem 0.8rem;
-                border-radius: 1.6rem;
-            }
-            .family-switcher select {
-                flex: 1;
-                min-width: 80px;
-            }
-            .family-meta {
-                padding: 0.8rem 1rem;
-                gap: 0.6rem 1rem;
-            }
-            .family-meta label {
-                flex: 1 1 100%;
-                font-size: 1.2rem;
-            }
-            .family-stats {
-                font-size: 1.1rem;
-                padding: 0.1rem 1rem;
-                margin-left: 0;
-                width: 100%;
-                justify-content: center;
-            }
-            .family-stats .stat-number {
-                font-size: 1.4rem;
-                min-width: 24px;
-            }
-            .nav-tab {
-                padding: 0.4rem 1rem;
-                font-size: 1.1rem;
-            }
-            .card {
-                padding: 1rem 0.8rem 1.2rem;
-            }
-            .card h3 {
-                font-size: 1.3rem;
-            }
-            .migrate-box {
-                padding: 1rem 1rem 1.4rem;
-            }
-            .migrate-box .migrate-code-area textarea {
-                min-height: 50px;
-                font-size: 1rem;
-            }
-            .migrate-box .migrate-btn-group button {
-                font-size: 1.1rem;
-                padding: 0.4rem 1.4rem;
-            }
-            .detail-panel {
-                padding: 1.4rem 1rem 1.6rem;
-                border-radius: 1.8rem;
-            }
-            .detail-panel .detail-title {
-                font-size: 1.6rem;
-                padding-right: 2.4rem;
-            }
-            .detail-field .label {
-                width: 60px;
-                font-size: 1.1rem;
-            }
-            .detail-field .value {
-                font-size: 1.2rem;
-            }
-            .detail-field .custom-select {
-                min-width: 80px;
-            }
-            .detail-field .custom-select select {
-                font-size: 1.1rem;
-                min-height: 2.8rem;
-                padding: 0.2rem 2rem 0.2rem 1rem;
-            }
-            .detail-field .btn-change-role {
-                font-size: 1rem;
-                padding: 0.2rem 0.8rem;
-            }
-            .add-member-form .custom-select {
-                flex: 1 0 100%;
-            }
-            .filter-bar .custom-select {
-                flex: 1 0 100%;
-            }
-            .filter-bar {
-                padding: 0.6rem 0.8rem;
-            }
-            .log-detail-input {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .log-detail-input label {
-                min-width: auto;
-            }
-            .log-detail-input input {
-                min-width: auto;
-            }
-            .rec-card {
-                padding: 0.5rem 0.6rem;
-            }
-            .rec-card .rec-time {
-                font-size: 0.85rem;
-            }
-            .rec-card .rec-log-time {
-                font-size: 0.8rem;
-            }
-            .rec-card .rec-text {
-                font-size: 1.1rem;
-            }
-            .rec-card .rec-tag {
-                font-size: 0.75rem;
-                padding: 0.05rem 0.6rem;
-            }
-            .detail-actions button {
-                font-size: 1.1rem;
-                padding: 0.3rem 1.2rem;
-            }
-        }
-        @media (max-width: 380px) {
-            .nav-tab {
-                font-size: 1rem;
-                padding: 0.3rem 0.8rem;
-            }
-            .detail-field .label {
-                width: 50px;
-                font-size: 1rem;
-            }
-            .rec-card .rec-time {
-                font-size: 0.75rem;
-            }
-        }
-    </style>
+  /* 下载遮罩 */
+  #downloadMask {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 9999;
+    display: none; align-items: center; justify-content: center;
+  }
+  #downloadMask .mask-box {
+    background: #fff; padding: 25px 35px; border-radius: 12px;
+    text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  #downloadMask .mask-box p { margin: 10px 0 0; font-size: 14px; color: #333; }
+  .spinner {
+    width: 36px; height: 36px; margin: 0 auto;
+    border: 4px solid #e0e0e0; border-top-color: #1a73e8;
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
 </head>
 <body>
-    <div class="app" id="app">
-        <!-- 顶部：标题 + 家族切换器 -->
-        <div class="header-row">
-            <h1>🏡 家族工单</h1>
-            <div class="family-switcher">
-                <label>📂 家族</label>
-                <select id="familySelect"></select>
-                <button class="btn-add-family" id="addFamilyBtn">＋ 新建</button>
-                <button class="btn-del-family" id="delFamilyBtn">✕ 删除</button>
-            </div>
-        </div>
+<div class="container">
+  <h1>学生考号生成器</h1>
+  <p class="subtitle">年级(2) + 班级(2) + 考场号(2) + 座位号(2) + 学号后四位(4)</p>
 
-        <div class="nav-tabs" id="navTabs">
-            <button class="nav-tab active" data-tab="tabFamily">家族信息</button>
-            <button class="nav-tab" data-tab="tabGroups">身份组 · 身份 · 等级</button>
-            <button class="nav-tab" data-tab="tabMembers">成员 & 记录</button>
-            <button class="nav-tab migrate-tab" data-tab="tabMigrate">📦 数据迁移</button>
-        </div>
-
-        <div id="tabFamily" class="tab-content active">
-            <div class="family-meta" id="familyMeta">
-                <label>家族名称 <input type="text" id="familyName" placeholder="请输入家族名称"></label>
-                <label>家族信息 <textarea id="familyInfo" rows="1" placeholder="家族简介/备注"></textarea></label>
-                <div class="family-stats">
-                    👥 成员总数 <span class="stat-number" id="memberCountDisplay">0</span>
-                </div>
-            </div>
-            <div style="font-size:1.2rem; color:#6a5f54; padding:0.2rem 0.4rem;">家族基本信息实时保存 · 成员数量自动统计</div>
-        </div>
-
-        <div id="tabGroups" class="tab-content">
-            <div class="card">
-                <h3>👥 身份组管理 <button id="addGroupBtn">+ 组</button></h3>
-                <div id="groupContainer"></div>
-                <div class="add-identity-row" style="margin-top:1rem;">
-                    <input type="text" id="newGroupInput" placeholder="新组名, 如 宗亲">
-                    <button id="addGroupSubmit">添加组</button>
-                </div>
-                <div style="font-size:1rem; color:#7b6e62; margin-top:0.6rem;">每个身份组下可添加身份，身份可选等级：低 / 中 / 高</div>
-            </div>
-        </div>
-
-        <div id="tabMembers" class="tab-content">
-            <div class="card">
-                <h3>🧑‍🤝‍🧑 家族成员 <button id="addMemberBtn">+ 成员</button></h3>
-                <div class="filter-bar" id="filterBar">
-                    <label>📂 筛选身份组：</label>
-                    <div class="custom-select" id="filterGroupWrapper">
-                        <select id="filterGroupSelect"><option value="">全部成员</option></select>
-                    </div>
-                </div>
-                <div id="memberList"></div>
-                <div class="add-member-form" id="addMemberForm">
-                    <input type="text" id="memberNameInput" placeholder="成员名字">
-                    <div class="custom-select" id="memberGroupWrapper">
-                        <select id="memberGroupSelect"><option value="">— 选择身份组 —</option></select>
-                    </div>
-                    <div class="custom-select" id="memberIdentityWrapper">
-                        <select id="memberIdentitySelect"><option value="">— 选择身份 —</option></select>
-                    </div>
-                    <button id="addMemberSubmit">添加</button>
-                </div>
-                <div style="font-size:1rem; color:#6f6256; margin-top:0.4rem;">点击成员卡片查看详情 · 数据迁移请切换至「数据迁移」页</div>
-            </div>
-        </div>
-
-        <!-- 数据迁移页 -->
-        <div id="tabMigrate" class="tab-content">
-            <div class="card">
-                <h3>📦 数据迁移 <span style="font-size:1.1rem;font-weight:400;color:#7b6e62;">当前家族：<span id="migrateFamilyName">—</span></span></h3>
-                <div class="migrate-section">
-
-                    <div class="migrate-box">
-                        <h4>📤 导出当前家族数据码</h4>
-                        <p>将当前家族的所有数据编码为数据码，可复制到其他设备导入。<br><span style="color:#7b6e62;font-size:1.1rem;">仅导出当前选中的家族数据</span></p>
-                        <div class="migrate-btn-group">
-                            <button class="btn-export" id="generateCodeBtn">生成数据码</button>
-                            <button class="btn-copy" id="copyCodeBtn">📋 复制数据码</button>
-                        </div>
-                        <div class="migrate-code-area">
-                            <textarea id="dataCodeOutput" placeholder="点击「生成数据码」导出当前家族数据" readonly></textarea>
-                        </div>
-                        <div class="migrate-status empty" id="exportStatus">💡 点击「生成数据码」导出当前家族数据</div>
-                    </div>
-
-                    <div class="migrate-box">
-                        <h4>📥 导入家族数据码</h4>
-                        <p>粘贴数据码后导入，将<strong>新增</strong>一个家族到列表中。<br><span style="color:#b06050;font-weight:500;">不会覆盖现有家族，而是自动创建新家族</span></p>
-                        <div class="migrate-code-area">
-                            <textarea id="dataCodeInput" placeholder="在此粘贴数据码"></textarea>
-                        </div>
-                        <div class="migrate-btn-group">
-                            <button class="btn-import" id="importCodeBtn">📥 导入为新家族</button>
-                            <button class="btn-copy" id="clearImportBtn">🗑️ 清空</button>
-                        </div>
-                        <div class="migrate-status empty" id="importStatus">💡 粘贴数据码后点击「导入为新家族」</div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <div class="save-indicator" id="saveIndicator">✅ 数据实时保存 (本地)</div>
+  <!-- 1. 基本设置 -->
+  <div class="card">
+    <h2>① 基本设置</h2>
+    <div class="row">
+      <div class="field">
+        <label>年级代码：</label>
+        <input type="text" id="grade" value="24" maxlength="2">
+      </div>
+      <div class="field">
+        <label>学号后取：</label>
+        <input type="number" id="idSuffix" value="4" min="1" max="8" style="width:55px">
+      </div>
     </div>
-
-    <!-- 成员详情弹窗 -->
-    <div class="detail-overlay" id="detailOverlay">
-        <div class="detail-panel" id="detailPanel">
-            <button class="close-detail" id="closeDetailBtn">✕</button>
-            <div class="detail-title" id="detailTitle">👤 成员详情</div>
-            <div id="detailBody"></div>
-            <div class="detail-actions" id="detailActions">
-                <button id="detailAddRecordBtn">📝 添加日志</button>
-                <button class="del-member-btn" id="detailDelMemberBtn">删除成员</button>
-            </div>
-        </div>
+    <div class="row" style="margin-top:10px">
+      <div class="field">
+        <label><input type="checkbox" id="gridMode"> 前后左右都算相邻</label>
+      </div>
+      <div class="field">
+        <label>每排座位：</label>
+        <input type="number" id="perRow" value="6" min="1" style="width:55px">
+      </div>
     </div>
+    <p class="tip">开启后按每排N个的网格排布，前后左右都不同班。</p>
+  </div>
 
-    <!-- 自定义对话框 -->
-    <div class="custom-dialog-overlay" id="customDialog">
-        <div class="custom-dialog">
-            <div class="dialog-title" id="dialogTitle">提示</div>
-            <div class="dialog-msg" id="dialogMsg">消息内容</div>
-            <input class="dialog-input" id="dialogInput" type="text" style="display:none;" placeholder="请输入内容">
-            <div class="dialog-btns" id="dialogBtns"></div>
-        </div>
+  <!-- 2. 导入学生 -->
+  <div class="card">
+    <h2>② 导入学生名单</h2>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+    <p class="tip">Excel需含列：姓名、学号、班级（列名完全一致）</p>
+    <div id="status"></div>
+    <div class="summary" id="studentSummary"></div>
+  </div>
+
+  <!-- 3. 考场设置 -->
+  <div class="card">
+    <h2>③ 设置各考场人数</h2>
+    <div id="roomList"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn-primary btn-sm" onclick="addRoom()">+ 添加考场</button>
+      <button class="btn-primary btn-sm" onclick="autoFillRooms()">按总人数平均分配</button>
     </div>
+    <div class="summary" id="roomSummary"></div>
+  </div>
 
-    <script>
-        (function() {
-            const STORAGE_KEY = 'familyWorkOrderMultiData';
+  <!-- 4. 生成 -->
+  <div class="card">
+    <h2>④ 生成考号</h2>
+    <div class="row">
+      <button class="btn-success" id="genBtn" onclick="generate()" disabled>开始生成</button>
+      <button class="btn-primary" id="exportBtn" onclick="exportExcel()" disabled>导出Excel</button>
+    </div>
+    <div id="genStatus"></div>
+    <div class="summary" id="genSummary"></div>
+  </div>
 
-            // ----- 数据结构 -----
-            function getEmptyFamilyData(name) {
-                return {
-                    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
-                    name: name || '未命名家族',
-                    info: '',
-                    groups: [],
-                    members: []
-                };
+  <!-- 5. 结果 -->
+  <div class="card hidden" id="resultCard">
+    <h2>⑤ 生成结果</h2>
+    <div class="table-wrap">
+      <table id="resultTable">
+        <thead>
+          <tr>
+            <th>考号</th><th>姓名</th><th>学号</th><th>班级</th><th>考场号</th><th>座位号</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 下载遮罩 -->
+<div id="downloadMask">
+  <div class="mask-box">
+    <div class="spinner"></div>
+    <p id="maskText">正在准备下载，请稍候…</p>
+  </div>
+</div>
+
+<script>
+// ============ 全局数据 ============
+let students = [];
+let rooms = [30];
+let result = [];
+
+// ============ 工具函数 ============
+function showStatus(el, msg, type) {
+  el.textContent = msg;
+  el.className = 'status-' + type;
+}
+function zfill(num, len) {
+  return String(num).padStart(len, '0');
+}
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+// ============ 考场设置 ============
+function renderRooms() {
+  const list = document.getElementById('roomList');
+  list.innerHTML = '';
+  rooms.forEach((size, i) => {
+    const div = document.createElement('div');
+    div.className = 'room-item';
+    div.innerHTML = `
+      <span>考场 ${i + 1}：</span>
+      <input type="number" min="1" value="${size}" onchange="updateRoom(${i}, this.value)">
+      <span style="color:#888">人</span>
+      <button class="btn-danger" onclick="removeRoom(${i})">删除</button>
+    `;
+    list.appendChild(div);
+  });
+  updateRoomSummary();
+}
+function addRoom() {
+  const last = rooms.length ? rooms[rooms.length - 1] : 30;
+  rooms.push(last);
+  renderRooms();
+}
+function removeRoom(i) {
+  if (rooms.length <= 1) { alert('至少保留一个考场'); return; }
+  rooms.splice(i, 1);
+  renderRooms();
+}
+function updateRoom(i, val) {
+  rooms[i] = Math.max(1, parseInt(val) || 1);
+  updateRoomSummary();
+}
+function autoFillRooms() {
+  if (!students.length) { alert('请先导入学生名单'); return; }
+  const n = rooms.length || 1;
+  const total = students.length;
+  const base = Math.floor(total / n);
+  const rem = total % n;
+  rooms = rooms.map((_, i) => base + (i < rem ? 1 : 0));
+  renderRooms();
+}
+function updateRoomSummary() {
+  const total = rooms.reduce((a, b) => a + b, 0);
+  const el = document.getElementById('roomSummary');
+  el.innerHTML = `共 <b>${rooms.length}</b> 个考场，总容量 <b>${total}</b> 人` +
+    (students.length ? `，学生 <b>${students.length}</b> 人` +
+      (total < students.length ? ` <span class="warn-text">（容量不足！）</span>` : '') : '');
+}
+
+// ============ 导入学生 ============
+document.getElementById('fileInput').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (evt) {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (!rows.length) {
+        showStatus(document.getElementById('status'), '文件为空', 'err');
+        return;
+      }
+      const keys = Object.keys(rows[0]);
+      if (!keys.includes('姓名') || !keys.includes('学号') || !keys.includes('班级')) {
+        showStatus(document.getElementById('status'),
+          '缺少必要列！需要：姓名、学号、班级。当前列：' + keys.join('、'), 'err');
+        return;
+      }
+
+      const suffixLen = parseInt(document.getElementById('idSuffix').value) || 4;
+      students = [];
+      let skipped = 0;
+      rows.forEach(r => {
+        const sid = String(r['学号']).trim();
+        if (!/^\d{8,}$/.test(sid)) { skipped++; return; }
+        students.push({
+          姓名: String(r['姓名']).trim(),
+          学号: sid,
+          班级: String(r['班级']).trim(),
+          后四位: sid.slice(-suffixLen)
+        });
+      });
+
+      const dup = checkSuffixDup();
+      let msg = `成功导入 ${students.length} 名学生` + (skipped ? `，跳过 ${skipped} 条无效学号` : '');
+      let type = 'ok';
+      if (dup.length) {
+        msg += `。注意：有 ${dup.length} 组学号后${suffixLen}位重复！`;
+        type = 'warn';
+      }
+      showStatus(document.getElementById('status'), msg, type);
+      document.getElementById('studentSummary').innerHTML =
+        `班级数：<b>${new Set(students.map(s => s.班级)).size}</b>`;
+      updateRoomSummary();
+      document.getElementById('genBtn').disabled = students.length === 0;
+    } catch (err) {
+      showStatus(document.getElementById('status'), '读取失败：' + err.message, 'err');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function checkSuffixDup() {
+  const map = {};
+  students.forEach(s => { map[s.后四位] = (map[s.后四位] || 0) + 1; });
+  return Object.keys(map).filter(k => map[k] > 1);
+}
+
+// ============ 随机分配考场 ============
+function assignRooms() {
+  const arr = students.slice();
+  shuffle(arr);
+  const res = [];
+  let idx = 0;
+  rooms.forEach((size, i) => {
+    res.push({ roomNo: i + 1, members: arr.slice(idx, idx + size) });
+    idx += size;
+  });
+  if (idx < arr.length) {
+    res[res.length - 1].members = res[res.length - 1].members.concat(arr.slice(idx));
+  }
+  return res;
+}
+
+// ============ 考场内排座 ============
+function arrangeSeats(members, gridMode, perRow) {
+  const total = members.length;
+  const groups = {};
+  members.forEach(s => {
+    (groups[s.班级] = groups[s.班级] || []).push(s);
+  });
+  Object.values(groups).forEach(g => shuffle(g));
+
+  const seats = new Array(total).fill(null);
+
+  function conflict(pos, cls) {
+    if (!gridMode) {
+      if (pos > 0 && seats[pos - 1] && seats[pos - 1].班级 === cls) return true;
+      if (pos < total - 1 && seats[pos + 1] && seats[pos + 1].班级 === cls) return true;
+    } else {
+      const row = Math.floor(pos / perRow), col = pos % perRow;
+      const neighbors = [];
+      if (col > 0) neighbors.push(pos - 1);
+      if (col < perRow - 1 && pos + 1 < total) neighbors.push(pos + 1);
+      if (row > 0) neighbors.push(pos - perRow);
+      if (pos + perRow < total) neighbors.push(pos + perRow);
+      for (const n of neighbors) {
+        if (seats[n] && seats[n].班级 === cls) return true;
+      }
+    }
+    return false;
+  }
+
+  for (let pos = 0; pos < total; pos++) {
+    const classOrder = Object.keys(groups)
+      .filter(c => groups[c].length > 0)
+      .sort((a, b) => groups[b].length - groups[a].length);
+    let placed = false;
+    for (const cls of classOrder) {
+      if (!conflict(pos, cls)) {
+        seats[pos] = groups[cls].pop();
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      const cls = classOrder[0];
+      if (cls) seats[pos] = groups[cls].pop();
+    }
+  }
+
+  function hasConflictAt(pos) {
+    if (!seats[pos]) return false;
+    const cls = seats[pos].班级;
+    const totalN = seats.length;
+    const list = [];
+    if (!gridMode) {
+      if (pos > 0) list.push(pos - 1);
+      if (pos < totalN - 1) list.push(pos + 1);
+    } else {
+      const col = pos % perRow;
+      if (col > 0) list.push(pos - 1);
+      if (col < perRow - 1 && pos + 1 < totalN) list.push(pos + 1);
+      if (pos - perRow >= 0) list.push(pos - perRow);
+      if (pos + perRow < totalN) list.push(pos + perRow);
+    }
+    return list.some(n => seats[n] && seats[n].班级 === cls);
+  }
+
+  // 二次修正
+  for (let round = 0; round < 5; round++) {
+    let fixed = false;
+    for (let i = 0; i < total; i++) {
+      if (!seats[i]) continue;
+      const checkList = [];
+      if (!gridMode) {
+        if (i + 1 < total) checkList.push(i + 1);
+      } else {
+        const col = i % perRow;
+        if (col < perRow - 1 && i + 1 < total) checkList.push(i + 1);
+        if (i + perRow < total) checkList.push(i + perRow);
+      }
+      for (const j of checkList) {
+        if (seats[j] && seats[j].班级 === seats[i].班级) {
+          for (let k = 0; k < total; k++) {
+            if (k === i || k === j || !seats[k]) continue;
+            if (seats[k].班级 === seats[i].班级) continue;
+            const tmp = seats[j];
+            seats[j] = seats[k];
+            seats[k] = tmp;
+            if (!hasConflictAt(j) && !hasConflictAt(k) && !hasConflictAt(i)) {
+              fixed = true;
+              break;
             }
-
-            function getEmptyAppData() {
-                return {
-                    families: [],
-                    currentFamilyId: null
-                };
-            }
-
-            let appData = loadAppData();
-
-            function loadAppData() {
-                try {
-                    const raw = localStorage.getItem(STORAGE_KEY);
-                    if (raw) {
-                        const parsed = JSON.parse(raw);
-                        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.families)) {
-                            parsed.families = parsed.families.map(f => ({
-                                ...f,
-                                groups: Array.isArray(f.groups) ? f.groups.map(g => ({
-                                    ...g,
-                                    identities: Array.isArray(g.identities) ? g.identities.map(id => ({ ...id,
-                                        level: id.level || '低' })) : []
-                                })) : [],
-                                members: Array.isArray(f.members) ? f.members.map(m => ({
-                                    ...m,
-                                    id: m.id || String(Math.floor(Math.random() * 90000) + 10000),
-                                    records: Array.isArray(m.records) ? m.records.map(r => ({
-                                        time: r.time || r,
-                                        text: r.text || '',
-                                        tag: r.tag || '',
-                                        logType: r.logType || '',
-                                        logTime: r.logTime || '',
-                                        logDetail: r.logDetail || ''
-                                    })) : []
-                                })) : []
-                            }));
-                            return parsed;
-                        }
-                    }
-                } catch (e) {}
-                return getEmptyAppData();
-            }
-
-            function saveAppData() {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-                document.getElementById('saveIndicator').textContent = '✅ 数据已保存 ' + new Date().toLocaleTimeString();
-            }
-
-            // ----- 当前家族操作 -----
-            function getCurrentFamily() {
-                if (!appData.currentFamilyId && appData.families.length > 0) {
-                    appData.currentFamilyId = appData.families[0].id;
-                    saveAppData();
-                }
-                return appData.families.find(f => f.id === appData.currentFamilyId) || null;
-            }
-
-            function setCurrentFamily(id) {
-                appData.currentFamilyId = id;
-                saveAppData();
-                renderAll();
-            }
-
-            function getCurrentFamilyData() {
-                const family = getCurrentFamily();
-                if (!family) {
-                    // 如果没有家族，创建一个默认的
-                    const newFamily = getEmptyFamilyData('我的家族');
-                    appData.families.push(newFamily);
-                    appData.currentFamilyId = newFamily.id;
-                    saveAppData();
-                    return newFamily;
-                }
-                return family;
-            }
-
-            function updateCurrentFamilyData(updatedData) {
-                const idx = appData.families.findIndex(f => f.id === appData.currentFamilyId);
-                if (idx !== -1) {
-                    appData.families[idx] = { ...appData.families[idx], ...updatedData };
-                    saveAppData();
-                    renderAll();
-                }
-            }
-
-            // 成员ID生成
-            function generateMemberId(family) {
-                const existingIds = family.members.map(m => parseInt(m.id) || 0);
-                let newId = 1;
-                while (existingIds.includes(newId) && newId < 99999) {
-                    newId++;
-                }
-                return String(newId).padStart(5, '0');
-            }
-
-            // ----- 家族管理 -----
-            function addFamily(name) {
-                const newFamily = getEmptyFamilyData(name || '新家族');
-                appData.families.push(newFamily);
-                appData.currentFamilyId = newFamily.id;
-                saveAppData();
-                renderAll();
-                return newFamily;
-            }
-
-            function deleteFamily(id) {
-                if (appData.families.length <= 1) {
-                    showAlert('至少保留一个家族');
-                    return;
-                }
-                const family = appData.families.find(f => f.id === id);
-                if (!family) return;
-                if (!confirm(`确定删除家族「${family.name}」及其所有数据吗？`)) return;
-                appData.families = appData.families.filter(f => f.id !== id);
-                if (appData.currentFamilyId === id) {
-                    appData.currentFamilyId = appData.families[0]?.id || null;
-                }
-                saveAppData();
-                renderAll();
-            }
-
-            // ----- 数据码编解码 -----
-            function encodeFamilyToCode(family) {
-                try {
-                    const exportData = {
-                        name: family.name,
-                        info: family.info,
-                        groups: family.groups,
-                        members: family.members.map(m => ({
-                            ...m,
-                            id: m.id || String(Math.floor(Math.random() * 90000) + 10000)
-                        }))
-                    };
-                    const jsonStr = JSON.stringify(exportData);
-                    const utf8Bytes = new TextEncoder().encode(jsonStr);
-                    const binaryString = String.fromCharCode(...utf8Bytes);
-                    return btoa(binaryString);
-                } catch (e) {
-                    return null;
-                }
-            }
-
-            function decodeCodeToFamily(code) {
-                try {
-                    const clean = code.replace(/\s/g, '');
-                    const binaryString = atob(clean);
-                    const bytes = new Uint8Array([...binaryString].map(c => c.charCodeAt(0)));
-                    const jsonStr = new TextDecoder().decode(bytes);
-                    const parsed = JSON.parse(jsonStr);
-                    if (typeof parsed === 'object' && parsed !== null &&
-                        'name' in parsed && 'groups' in parsed && Array.isArray(parsed.groups) &&
-                        'members' in parsed && Array.isArray(parsed.members)) {
-                        return parsed;
-                    }
-                    return null;
-                } catch (e) {
-                    return null;
-                }
-            }
-
-            // ===== 导出功能 =====
-            function generateCode() {
-                const family = getCurrentFamily();
-                if (!family) {
-                    setExportStatus('⚠️ 没有当前家族', 'error');
-                    return;
-                }
-                if (family.members.length === 0 && !family.name && !family.info && family.groups.length === 0) {
-                    setExportStatus('⚠️ 当前家族没有数据可导出', 'error');
-                    return;
-                }
-                const code = encodeFamilyToCode(family);
-                if (code) {
-                    document.getElementById('dataCodeOutput').value = code;
-                    setExportStatus(`✅ 数据码已生成！家族：${family.name}，共 ${family.members.length} 名成员，${family.groups.length} 个身份组`,
-                        'success');
-                } else {
-                    setExportStatus('❌ 数据编码失败，请重试', 'error');
-                }
-            }
-
-            function copyCode() {
-                const textarea = document.getElementById('dataCodeOutput');
-                const code = textarea.value.trim();
-                if (!code) {
-                    setExportStatus('⚠️ 没有数据码可复制，请先生成', 'error');
-                    return;
-                }
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(code).then(() => {
-                        setExportStatus('✅ 数据码已复制到剪贴板！', 'success');
-                    }).catch(() => {
-                        textarea.select();
-                        document.execCommand('copy');
-                        setExportStatus('✅ 数据码已复制到剪贴板！', 'success');
-                    });
-                } else {
-                    textarea.select();
-                    document.execCommand('copy');
-                    setExportStatus('✅ 数据码已复制到剪贴板！', 'success');
-                }
-            }
-
-            function setExportStatus(msg, type = 'info') {
-                const el = document.getElementById('exportStatus');
-                el.textContent = msg;
-                el.className = 'migrate-status ' + type;
-            }
-
-            // ===== 导入功能 =====
-            function importDataFromCode() {
-                const textarea = document.getElementById('dataCodeInput');
-                const code = textarea.value.trim();
-                if (!code) {
-                    setImportStatus('⚠️ 请先粘贴数据码', 'error');
-                    return;
-                }
-                const parsed = decodeCodeToFamily(code);
-                if (!parsed) {
-                    setImportStatus('❌ 数据码无效或已损坏，请检查是否完整复制', 'error');
-                    return;
-                }
-                // 检查是否已存在同名家族
-                const existing = appData.families.find(f => f.name === parsed.name);
-                let finalName = parsed.name;
-                if (existing) {
-                    const suffix = (existing.name.match(/\((\d+)\)$/) || [])[1];
-                    const num = suffix ? parseInt(suffix) + 1 : 2;
-                    finalName = `${parsed.name}(${num})`;
-                }
-                // 创建新家族
-                const newFamily = getEmptyFamilyData(finalName);
-                newFamily.info = parsed.info || '';
-                newFamily.groups = parsed.groups.map(g => ({
-                    ...g,
-                    identities: Array.isArray(g.identities) ? g.identities.map(id => ({ ...id, level: id.level ||
-                            '低' })) : []
-                }));
-                newFamily.members = parsed.members.map(m => ({
-                    ...m,
-                    id: m.id || String(Math.floor(Math.random() * 90000) + 10000),
-                    records: Array.isArray(m.records) ? m.records.map(r => ({
-                        time: r.time || r,
-                        text: r.text || '',
-                        tag: r.tag || '',
-                        logType: r.logType || '',
-                        logTime: r.logTime || '',
-                        logDetail: r.logDetail || ''
-                    })) : []
-                }));
-                appData.families.push(newFamily);
-                appData.currentFamilyId = newFamily.id;
-                saveAppData();
-                renderAll();
-                setImportStatus(`✅ 导入成功！新增家族「${finalName}」，共 ${newFamily.members.length} 名成员`, 'success');
-                textarea.value = '';
-            }
-
-            function setImportStatus(msg, type = 'info') {
-                const el = document.getElementById('importStatus');
-                el.textContent = msg;
-                el.className = 'migrate-status ' + type;
-            }
-
-            function clearImportInput() {
-                document.getElementById('dataCodeInput').value = '';
-                setImportStatus('💡 已清空，可粘贴新的数据码', 'info');
-            }
-
-            // ----- 工具函数 -----
-            function getGroupOfIdentity(family, identityName) {
-                for (let g of family.groups) {
-                    for (let id of g.identities) {
-                        if (id.name === identityName) return g.name;
-                    }
-                }
-                return null;
-            }
-
-            function getIdentityLevel(family, idName) {
-                for (let g of family.groups) {
-                    for (let id of g.identities) {
-                        if (id.name === idName) return id.level;
-                    }
-                }
-                return '—';
-            }
-
-            function getIdentitiesOfGroup(family, groupName) {
-                for (let g of family.groups) {
-                    if (g.name === groupName) return g.identities.map(id => id.name);
-                }
-                return [];
-            }
-
-            function getLogCardClass(tag) {
-                if (tag === '奖励') return 'reward';
-                if (tag === '处罚') return 'punish';
-                if (tag === '其他') return 'other';
-                if (tag === 'role_change') return 'role-log';
-                return '';
-            }
-
-            function getLogDisplayTag(tag) {
-                if (tag === 'role_change') return '📌 调职';
-                if (tag === '奖励') return '🏆 奖励';
-                if (tag === '处罚') return '⚠️ 处罚';
-                if (tag === '其他') return '📋 其他';
-                return tag || '';
-            }
-
-            function getLogTagClass(tag) {
-                if (tag === '奖励') return 'reward';
-                if (tag === '处罚') return 'punish';
-                if (tag === '其他') return 'other';
-                if (tag === 'role_change') return 'role-log';
-                return '';
-            }
-
-            // ----- 自定义对话框 -----
-            function customDialog(options) {
-                return new Promise((resolve) => {
-                    const overlay = document.getElementById('customDialog');
-                    const title = document.getElementById('dialogTitle');
-                    const msg = document.getElementById('dialogMsg');
-                    const input = document.getElementById('dialogInput');
-                    const btns = document.getElementById('dialogBtns');
-
-                    title.textContent = options.title || '提示';
-                    msg.textContent = options.message || '';
-                    input.style.display = options.type === 'prompt' ? 'block' : 'none';
-                    input.value = options.defaultValue || '';
-                    if (options.type === 'prompt') {
-                        input.placeholder = options.placeholder || '请输入内容';
-                    }
-                    btns.innerHTML = '';
-
-                    if (options.type === 'alert') {
-                        const btn = document.createElement('button');
-                        btn.className = 'btn-confirm';
-                        btn.textContent = '确定';
-                        btn.addEventListener('click', function() {
-                            overlay.classList.remove('open');
-                            resolve();
-                        });
-                        btns.appendChild(btn);
-                    } else if (options.type === 'confirm') {
-                        const confirmBtn = document.createElement('button');
-                        confirmBtn.className = 'btn-confirm';
-                        confirmBtn.textContent = '确定';
-                        confirmBtn.addEventListener('click', function() {
-                            overlay.classList.remove('open');
-                            resolve(true);
-                        });
-                        const cancelBtn = document.createElement('button');
-                        cancelBtn.className = 'btn-cancel';
-                        cancelBtn.textContent = '取消';
-                        cancelBtn.addEventListener('click', function() {
-                            overlay.classList.remove('open');
-                            resolve(false);
-                        });
-                        btns.appendChild(confirmBtn);
-                        btns.appendChild(cancelBtn);
-                    } else if (options.type === 'prompt') {
-                        const confirmBtn = document.createElement('button');
-                        confirmBtn.className = 'btn-confirm';
-                        confirmBtn.textContent = '确定';
-                        confirmBtn.addEventListener('click', function() {
-                            overlay.classList.remove('open');
-                            resolve(input.value);
-                        });
-                        const cancelBtn = document.createElement('button');
-                        cancelBtn.className = 'btn-cancel';
-                        cancelBtn.textContent = '取消';
-                        cancelBtn.addEventListener('click', function() {
-                            overlay.classList.remove('open');
-                            resolve(null);
-                        });
-                        btns.appendChild(confirmBtn);
-                        btns.appendChild(cancelBtn);
-                        input.addEventListener('keydown', function(e) {
-                            if (e.key === 'Enter') {
-                                confirmBtn.click();
-                            }
-                        });
-                        setTimeout(() => input.focus(), 100);
-                    }
-                    overlay.classList.add('open');
-                });
-            }
-
-            async function showAlert(msg, title = '提示') {
-                await customDialog({ type: 'alert', title, message: msg });
-            }
-            async function showConfirm(msg, title = '确认') {
-                return await customDialog({ type: 'confirm', title, message: msg });
-            }
-            async function showPrompt(msg, defaultValue = '', title = '输入', placeholder = '') {
-                return await customDialog({ type: 'prompt', title, message: msg, defaultValue, placeholder });
-            }
-
-            // ----- 渲染 -----
-            function renderAll() {
-                renderFamilySelect();
-                const family = getCurrentFamily();
-                if (family) {
-                    renderFamilyMeta(family);
-                    renderGroups(family);
-                    renderMemberSelectOptions(family);
-                    renderFilterOptions(family);
-                    renderMembers(family);
-                    document.getElementById('migrateFamilyName').textContent = family.name || '未命名';
-                } else {
-                    // 没有家族，显示空状态
-                    document.getElementById('familyName').value = '';
-                    document.getElementById('familyInfo').value = '';
-                    document.getElementById('memberCountDisplay').textContent = '0';
-                    document.getElementById('groupContainer').innerHTML =
-                        '<div style="color:#a39284; padding:0.6rem 0; font-size:1.2rem;">请先创建一个家族</div>';
-                    document.getElementById('memberList').innerHTML =
-                        '<div style="color:#a18d7b; padding:0.4rem 0; font-size:1.2rem;">请先创建一个家族</div>';
-                    document.getElementById('migrateFamilyName').textContent = '—';
-                }
-                updateMemberCount(family);
-            }
-
-            function renderFamilySelect() {
-                const select = document.getElementById('familySelect');
-                const currentVal = select.value;
-                select.innerHTML = '';
-                appData.families.forEach(f => {
-                    const opt = document.createElement('option');
-                    opt.value = f.id;
-                    opt.textContent = f.name || '未命名家族';
-                    select.appendChild(opt);
-                });
-                if (appData.currentFamilyId && [...select.options].some(o => o.value === appData.currentFamilyId)) {
-                    select.value = appData.currentFamilyId;
-                } else if (select.options.length > 0) {
-                    select.value = select.options[0].value;
-                    appData.currentFamilyId = select.value;
-                    saveAppData();
-                }
-                // 如果当前选中的值不在列表中，重置
-                if (!select.value && select.options.length > 0) {
-                    select.value = select.options[0].value;
-                    appData.currentFamilyId = select.value;
-                    saveAppData();
-                }
-            }
-
-            function renderFamilyMeta(family) {
-                const nameInput = document.getElementById('familyName');
-                const infoInput = document.getElementById('familyInfo');
-                if (nameInput.value !== family.name) nameInput.value = family.name;
-                if (infoInput.value !== family.info) infoInput.value = family.info;
-            }
-
-            function renderGroups(family) {
-                const container = document.getElementById('groupContainer');
-                container.innerHTML = '';
-                if (!family || family.groups.length === 0) {
-                    container.innerHTML =
-                    '<div style="color:#a39284; padding:0.6rem 0; font-size:1.2rem;">暂无身份组，请添加</div>';
-                    return;
-                }
-                family.groups.forEach((group, gIdx) => {
-                    const block = document.createElement('div');
-                    block.className = 'group-block';
-
-                    const header = document.createElement('div');
-                    header.className = 'group-header';
-                    header.innerHTML =
-                        `<span>📂 ${group.name}</span><button class="del-group" data-gidx="${gIdx}">✕</button>`;
-                    header.querySelector('.del-group').addEventListener('click', async function() {
-                        const idx = parseInt(this.dataset.gidx);
-                        if (family.groups.length <= 1) {
-                            await showAlert('至少保留一个身份组');
-                            return;
-                        }
-                        const confirm = await showConfirm(`删除身份组 "${family.groups[idx].name}" 及其所有身份？`,
-                            '删除确认');
-                        if (!confirm) return;
-                        family.groups.splice(idx, 1);
-                        family.members.forEach(m => {
-                            if (family.groups.some(g => g.name === m.role)) return;
-                            m.role = '';
-                        });
-                        updateCurrentFamilyData({ groups: family.groups, members: family.members });
-                        renderAll();
-                    });
-                    block.appendChild(header);
-
-                    const identityContainer = document.createElement('div');
-                    identityContainer.className = 'identity-list';
-                    if (group.identities.length === 0) {
-                        const hint = document.createElement('span');
-                        hint.style.cssText = 'color:#a39284; font-size:1.1rem; padding:0.2rem 0;';
-                        hint.textContent = '暂无身份，请添加';
-                        identityContainer.appendChild(hint);
-                    } else {
-                        group.identities.forEach((id, idIdx) => {
-                            const chip = document.createElement('span');
-                            chip.className = 'identity-chip';
-                            chip.innerHTML = `${id.name} `;
-                            const wrapper = document.createElement('span');
-                            wrapper.className = 'custom-select';
-                            const sel = document.createElement('select');
-                            ['低', '中', '高'].forEach(l => {
-                                const opt = document.createElement('option');
-                                opt.value = l;
-                                opt.textContent = l;
-                                sel.appendChild(opt);
-                            });
-                            sel.value = id.level || '低';
-                            sel.addEventListener('change', function(e) {
-                                family.groups[gIdx].identities[idIdx].level = this.value;
-                                updateCurrentFamilyData({ groups: family.groups });
-                            });
-                            wrapper.appendChild(sel);
-                            chip.appendChild(wrapper);
-
-                            const delId = document.createElement('span');
-                            delId.className = 'del-id';
-                            delId.textContent = '✕';
-                            delId.addEventListener('click', async function(e) {
-                                e.stopPropagation();
-                                if (group.identities.length <= 1) {
-                                    await showAlert('每个组至少保留一个身份');
-                                    return;
-                                }
-                                const idName = family.groups[gIdx].identities[idIdx].name;
-                                const used = family.members.some(m => m.role === idName);
-                                if (used) {
-                                    const confirm = await showConfirm(
-                                        `身份 "${idName}" 被成员使用，删除后成员身份将置空。继续？`,
-                                        '删除确认'
-                                    );
-                                    if (!confirm) return;
-                                }
-                                family.groups[gIdx].identities.splice(idIdx, 1);
-                                family.members.forEach(m => { if (m.role === idName) m.role = ''; });
-                                updateCurrentFamilyData({ groups: family.groups, members: family.members });
-                                renderAll();
-                            });
-                            chip.appendChild(delId);
-                            identityContainer.appendChild(chip);
-                        });
-                    }
-                    block.appendChild(identityContainer);
-
-                    const addRow = document.createElement('div');
-                    addRow.className = 'add-identity-row';
-                    const input = document.createElement('input');
-                    input.placeholder = '身份名';
-                    input.style.flex = '1';
-                    const addBtn = document.createElement('button');
-                    addBtn.textContent = '+ 身份';
-                    addBtn.addEventListener('click', async function() {
-                        const val = input.value.trim();
-                        if (!val) { await showAlert('请输入身份名称'); return; }
-                        if (family.groups[gIdx].identities.some(i => i.name === val)) {
-                            await showAlert('该身份已存在于此组');
-                            return;
-                        }
-                        family.groups[gIdx].identities.push({ name: val, level: '低' });
-                        input.value = '';
-                        updateCurrentFamilyData({ groups: family.groups });
-                        renderAll();
-                    });
-                    addRow.appendChild(input);
-                    addRow.appendChild(addBtn);
-                    block.appendChild(addRow);
-                    container.appendChild(block);
-                });
-            }
-
-            function renderMemberSelectOptions(family) {
-                const groupSelect = document.getElementById('memberGroupSelect');
-                const identitySelect = document.getElementById('memberIdentitySelect');
-                const currentGroup = groupSelect.value;
-
-                groupSelect.innerHTML = '<option value="">— 选择身份组 —</option>';
-                if (family) {
-                    family.groups.forEach(g => {
-                        const opt = document.createElement('option');
-                        opt.value = g.name;
-                        opt.textContent = g.name;
-                        groupSelect.appendChild(opt);
-                    });
-                }
-                if ([...groupSelect.options].some(o => o.value === currentGroup)) {
-                    groupSelect.value = currentGroup;
-                } else {
-                    groupSelect.value = '';
-                }
-
-                const selectedGroup = groupSelect.value;
-                identitySelect.innerHTML = '<option value="">— 选择身份 —</option>';
-                if (family && selectedGroup) {
-                    const ids = getIdentitiesOfGroup(family, selectedGroup);
-                    ids.forEach(id => {
-                        const opt = document.createElement('option');
-                        opt.value = id;
-                        opt.textContent = id;
-                        identitySelect.appendChild(opt);
-                    });
-                }
-            }
-
-            function renderFilterOptions(family) {
-                const filterSelect = document.getElementById('filterGroupSelect');
-                const currentVal = filterSelect.value;
-                filterSelect.innerHTML = '<option value="">全部成员</option>';
-                if (family) {
-                    family.groups.forEach(g => {
-                        const opt = document.createElement('option');
-                        opt.value = g.name;
-                        opt.textContent = g.name;
-                        filterSelect.appendChild(opt);
-                    });
-                }
-                if ([...filterSelect.options].some(o => o.value === currentVal)) {
-                    filterSelect.value = currentVal;
-                } else {
-                    filterSelect.value = '';
-                }
-            }
-
-            function getMemberGroup(family, member) {
-                return getGroupOfIdentity(family, member.role);
-            }
-
-            function renderMembers(family) {
-                const container = document.getElementById('memberList');
-                container.innerHTML = '';
-                if (!family || family.members.length === 0) {
-                    container.innerHTML =
-                        '<div style="color:#a18d7b; padding:0.4rem 0; font-size:1.2rem;">暂无成员，请添加</div>';
-                    return;
-                }
-
-                const filterVal = document.getElementById('filterGroupSelect').value;
-                let filtered = family.members;
-                if (filterVal) {
-                    filtered = family.members.filter(m => getMemberGroup(family, m) === filterVal);
-                }
-
-                if (filtered.length === 0) {
-                    container.innerHTML =
-                        '<div style="color:#a18d7b; padding:0.4rem 0; font-size:1.2rem;">该身份组下暂无成员</div>';
-                    return;
-                }
-                filtered.forEach((member) => {
-                    const realIdx = family.members.indexOf(member);
-                    const div = document.createElement('div');
-                    div.className = 'member-item';
-                    div.dataset.memberIdx = realIdx;
-
-                    const row = document.createElement('div');
-                    row.className = 'member-row';
-
-                    const idSpan = document.createElement('span');
-                    idSpan.className = 'member-id';
-                    idSpan.textContent = member.id || '-----';
-
-                    const nameSpan = document.createElement('span');
-                    nameSpan.className = 'member-name';
-                    nameSpan.textContent = member.name || '未命名';
-
-                    const roleSpan = document.createElement('span');
-                    roleSpan.className = 'member-role';
-                    roleSpan.textContent = member.role || '未分配';
-
-                    const levelSpan = document.createElement('span');
-                    levelSpan.className = 'member-level';
-                    const lv = getIdentityLevel(family, member.role);
-                    levelSpan.textContent = lv !== '—' ? `等级 ${lv}` : '';
-
-                    const countSpan = document.createElement('span');
-                    countSpan.className = 'rec-count';
-                    const recCount = (member.records || []).length;
-                    countSpan.textContent = `📋 ${recCount} 条记录`;
-
-                    row.appendChild(idSpan);
-                    row.appendChild(nameSpan);
-                    row.appendChild(roleSpan);
-                    if (lv !== '—') row.appendChild(levelSpan);
-                    row.appendChild(countSpan);
-                    div.appendChild(row);
-
-                    div.addEventListener('click', function() {
-                        openDetail(parseInt(this.dataset.memberIdx));
-                    });
-
-                    container.appendChild(div);
-                });
-            }
-
-            function updateMemberCount(family) {
-                const count = family ? family.members.length : 0;
-                document.getElementById('memberCountDisplay').textContent = count;
-            }
-
-            // ----- 详情弹窗 -----
-            let currentDetailIdx = -1;
-
-            async function openDetail(idx) {
-                const family = getCurrentFamily();
-                if (!family) return;
-                const member = family.members[idx];
-                if (!member) return;
-                currentDetailIdx = idx;
-
-                const overlay = document.getElementById('detailOverlay');
-                const title = document.getElementById('detailTitle');
-                const body = document.getElementById('detailBody');
-
-                title.innerHTML = `🆔 ${member.id || '-----'} · ${member.name}`;
-
-                const currentGroup = getGroupOfIdentity(family, member.role) || '';
-                const currentLevel = getIdentityLevel(family, member.role);
-
-                let html = `
-                    <div class="detail-field"><span class="label">ID</span><span class="value">${member.id || '-----'}</span></div>
-                    <div class="detail-field"><span class="label">姓名</span><span class="value">${member.name}</span></div>
-                    <div class="detail-field">
-                        <span class="label">身份组</span>
-                        <div class="custom-select" style="flex:1;min-width:100px;">
-                            <select id="detailGroupSelect">
-                                <option value="">— 无 —</option>
-                                ${family.groups.map(g => `<option value="${g.name}" ${g.name === currentGroup ? 'selected' : ''}>${g.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <button class="btn-change-role" id="detailApplyGroupBtn">应用</button>
-                    </div>
-                    <div class="detail-field">
-                        <span class="label">身份</span>
-                        <div class="custom-select" style="flex:1;min-width:100px;">
-                            <select id="detailIdentitySelect">
-                                <option value="">— 无 —</option>
-                                ${currentGroup ? getIdentitiesOfGroup(family, currentGroup).map(id => `<option value="${id}" ${id === member.role ? 'selected' : ''}>${id}</option>`).join('') : ''}
-                            </select>
-                        </div>
-                        <button class="btn-change-role" id="detailApplyIdentityBtn">应用</button>
-                    </div>
-                    <div class="detail-field"><span class="label">等级</span><span class="value">${currentLevel || '—'}</span></div>
-                    <div class="detail-field"><span class="label">记录数</span><span class="value">${(member.records || []).length}</span></div>
-                `;
-
-                html += `<div class="detail-records"><h4>📋 记录明细 <span style="font-size:1rem;font-weight:400;color:#7b6e62;">(调职日志不可删)</span></h4>`;
-                if (member.records && member.records.length > 0) {
-                    member.records.forEach((rec, ri) => {
-                        const isRoleLog = rec.tag === 'role_change';
-                        const cardClass = getLogCardClass(rec.tag);
-                        const tagClass = getLogTagClass(rec.tag);
-                        const displayTag = getLogDisplayTag(rec.tag);
-                        let displayText = rec.text || '';
-                        if (rec.logType === '奖励' && rec.logDetail) {
-                            displayText = `🎁 ${rec.logDetail}`;
-                        } else if (rec.logType === '处罚' && rec.logDetail) {
-                            displayText = `⚖️ ${rec.logDetail}`;
-                        } else if (rec.logType === '其他' && rec.logDetail) {
-                            displayText = `📋 ${rec.logDetail}`;
-                        }
-                        const logTimeDisplay = rec.logTime ? rec.logTime : '';
-                        html += `
-                            <div class="rec-card ${cardClass}">
-                                <div class="rec-top">
-                                    <span class="rec-time">${rec.time || '无时间'}</span>
-                                    ${logTimeDisplay ? `<span class="rec-log-time">📅 ${logTimeDisplay}</span>` : ''}
-                                    ${displayTag ? `<span class="rec-tag ${tagClass}">${displayTag}</span>` : ''}
-                                    ${!isRoleLog ? `<button class="rec-del" data-rec-idx="${ri}">✕</button>` : ''}
-                                </div>
-                                <div class="rec-text">${displayText || rec.text || ''}</div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    html += `<div style="color:#a39284; font-size:1.1rem; padding:0.6rem 0; text-align:center;">暂无记录</div>`;
-                }
-                html += `</div>`;
-
-                body.innerHTML = html;
-
-                // 级联
-                const detailGroupSelect = document.getElementById('detailGroupSelect');
-                const detailIdentitySelect = document.getElementById('detailIdentitySelect');
-                if (detailGroupSelect) {
-                    detailGroupSelect.addEventListener('change', function() {
-                        const gName = this.value;
-                        detailIdentitySelect.innerHTML = '<option value="">— 无 —</option>';
-                        if (gName) {
-                            getIdentitiesOfGroup(family, gName).forEach(id => {
-                                const opt = document.createElement('option');
-                                opt.value = id;
-                                opt.textContent = id;
-                                detailIdentitySelect.appendChild(opt);
-                            });
-                        }
-                    });
-                }
-
-                document.getElementById('detailApplyGroupBtn').addEventListener('click', async function() {
-                    const newGroup = detailGroupSelect.value;
-                    const currentIdentity = member.role;
-                    const oldGroup = getGroupOfIdentity(family, currentIdentity);
-                    if (newGroup === oldGroup) {
-                        await showAlert('成员已在该身份组中');
-                        return;
-                    }
-                    const ids = getIdentitiesOfGroup(family, newGroup);
-                    if (ids.length === 0) {
-                        await showAlert('目标身份组没有身份，请先添加身份');
-                        return;
-                    }
-                    const newIdentity = ids[0];
-                    const oldIdentity = member.role || '无身份';
-                    const now = new Date();
-                    const timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' +
-                        String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2,
-                        '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-                    member.role = newIdentity;
-                    member.records.push({
-                        time: timeStr,
-                        text: `身份调职：从「${oldGroup || '无组'} · ${oldIdentity}」调至「${newGroup} · ${newIdentity}」`,
-                        tag: 'role_change',
-                        logType: '',
-                        logTime: '',
-                        logDetail: ''
-                    });
-                    updateCurrentFamilyData({ members: family.members });
-                    renderAll();
-                    openDetail(currentDetailIdx);
-                    await showAlert(`已调职至「${newGroup} · ${newIdentity}」`);
-                });
-
-                document.getElementById('detailApplyIdentityBtn').addEventListener('click', async function() {
-                    const newIdentity = detailIdentitySelect.value;
-                    if (!newIdentity) { await showAlert('请选择身份'); return; }
-                    if (newIdentity === member.role) { await showAlert('已是该身份'); return; }
-                    const oldIdentity = member.role || '无身份';
-                    const oldGroup = getGroupOfIdentity(family, oldIdentity) || '无组';
-                    const newGroup = getGroupOfIdentity(family, newIdentity) || '未知组';
-                    const now = new Date();
-                    const timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' +
-                        String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2,
-                        '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-                    member.role = newIdentity;
-                    member.records.push({
-                        time: timeStr,
-                        text: `身份调整：从「${oldGroup} · ${oldIdentity}」调整为「${newGroup} · ${newIdentity}」`,
-                        tag: 'role_change',
-                        logType: '',
-                        logTime: '',
-                        logDetail: ''
-                    });
-                    updateCurrentFamilyData({ members: family.members });
-                    renderAll();
-                    openDetail(currentDetailIdx);
-                    await showAlert(`已调整为「${newGroup} · ${newIdentity}」`);
-                });
-
-                // 删除普通记录
-                body.querySelectorAll('.rec-del').forEach(btn => {
-                    btn.addEventListener('click', async function(e) {
-                        e.stopPropagation();
-                        const ri = parseInt(this.dataset.recIdx);
-                        const confirm = await showConfirm('删除此条记录？', '删除确认');
-                        if (!confirm) return;
-                        family.members[currentDetailIdx].records.splice(ri, 1);
-                        updateCurrentFamilyData({ members: family.members });
-                        renderAll();
-                        openDetail(currentDetailIdx);
-                    });
-                });
-
-                // 重新绑定按钮
-                const addRecBtn = document.getElementById('detailAddRecordBtn');
-                const delMemberBtn = document.getElementById('detailDelMemberBtn');
-                const newAddRec = addRecBtn.cloneNode(true);
-                addRecBtn.parentNode.replaceChild(newAddRec, addRecBtn);
-                const newDelMember = delMemberBtn.cloneNode(true);
-                delMemberBtn.parentNode.replaceChild(newDelMember, delMemberBtn);
-
-                document.getElementById('detailAddRecordBtn').addEventListener('click', function() {
-                    showLogDialog(currentDetailIdx);
-                });
-
-                document.getElementById('detailDelMemberBtn').addEventListener('click', async function() {
-                    const confirm = await showConfirm(`确定删除成员 “${family.members[currentDetailIdx].name}” 吗？`,
-                        '删除确认');
-                    if (!confirm) return;
-                    family.members.splice(currentDetailIdx, 1);
-                    updateCurrentFamilyData({ members: family.members });
-                    renderAll();
-                    closeDetail();
-                });
-
-                overlay.classList.add('open');
-            }
-
-            // ----- 日志类型选择对话框 -----
-            async function showLogDialog(memberIdx) {
-                const family = getCurrentFamily();
-                if (!family) return;
-                const member = family.members[memberIdx];
-                if (!member) return;
-
-                const overlay = document.getElementById('customDialog');
-                const title = document.getElementById('dialogTitle');
-                const msg = document.getElementById('dialogMsg');
-                const input = document.getElementById('dialogInput');
-                const btns = document.getElementById('dialogBtns');
-
-                title.textContent = '📝 添加日志';
-                msg.innerHTML = `
-                    <div style="text-align:left;font-size:1.2rem;padding:0.4rem 0;">
-                        <div style="margin-bottom:0.6rem;font-weight:500;">选择日志类型：</div>
-                        <div class="log-type-selector" id="logTypeSelector">
-                            <button class="type-btn reward" data-type="奖励">🏆 奖励</button>
-                            <button class="type-btn punish" data-type="处罚">⚠️ 处罚</button>
-                            <button class="type-btn other" data-type="其他">📋 其他</button>
-                        </div>
-                        <div class="log-detail-input" id="logDetailInput">
-                            <label id="logDetailLabel">奖励内容</label>
-                            <input id="logDetailField" placeholder="请输入详情">
-                            <label style="min-width:40px;">时间</label>
-                            <input id="logTimeField" type="datetime-local" style="flex:0 1 180px;">
-                        </div>
-                        <div style="margin-top:0.6rem;font-size:1.1rem;color:#7b6e62;">选择类型后填写详情，点击确定添加</div>
-                    </div>
-                `;
-                input.style.display = 'none';
-
-                let selectedType = '';
-
-                btns.innerHTML = '';
-                const confirmBtn = document.createElement('button');
-                confirmBtn.className = 'btn-confirm';
-                confirmBtn.textContent = '确定添加';
-                const cancelBtn = document.createElement('button');
-                cancelBtn.className = 'btn-cancel';
-                cancelBtn.textContent = '取消';
-                btns.appendChild(confirmBtn);
-                btns.appendChild(cancelBtn);
-
-                overlay.classList.add('open');
-
-                const typeBtns = document.querySelectorAll('.type-btn');
-                const detailDiv = document.getElementById('logDetailInput');
-                const detailField = document.getElementById('logDetailField');
-                const timeField = document.getElementById('logTimeField');
-                const labelEl = document.getElementById('logDetailLabel');
-
-                typeBtns.forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        typeBtns.forEach(b => b.classList.remove('active'));
-                        this.classList.add('active');
-                        selectedType = this.dataset.type;
-                        detailDiv.classList.add('show');
-                        if (selectedType === '奖励') {
-                            labelEl.textContent = '🎁 奖励内容';
-                            detailField.placeholder = '输入奖励内容 (如：奖金1000元)';
-                        } else if (selectedType === '处罚') {
-                            labelEl.textContent = '⚖️ 处罚结果';
-                            detailField.placeholder = '输入处罚结果 (如：警告一次)';
-                        } else {
-                            labelEl.textContent = '📋 详情说明';
-                            detailField.placeholder = '输入详情说明';
-                        }
-                        const now = new Date();
-                        const localStr = now.getFullYear() + '-' +
-                            String(now.getMonth() + 1).padStart(2, '0') + '-' +
-                            String(now.getDate()).padStart(2, '0') + 'T' +
-                            String(now.getHours()).padStart(2, '0') + ':' +
-                            String(now.getMinutes()).padStart(2, '0');
-                        timeField.value = localStr;
-                    });
-                });
-
-                return new Promise((resolve) => {
-                    confirmBtn.addEventListener('click', async function() {
-                        if (!selectedType) {
-                            await showAlert('请选择日志类型');
-                            return;
-                        }
-                        const detail = detailField.value.trim();
-                        if (!detail) {
-                            await showAlert('请输入详情内容');
-                            return;
-                        }
-                        const logTime = timeField.value;
-                        if (!logTime) {
-                            await showAlert('请选择时间');
-                            return;
-                        }
-                        const displayTime = logTime.replace('T', ' ');
-                        const now = new Date();
-                        const recordTime = now.getFullYear() + '-' +
-                            String(now.getMonth() + 1).padStart(2, '0') + '-' +
-                            String(now.getDate()).padStart(2, '0') + ' ' +
-                            String(now.getHours()).padStart(2, '0') + ':' +
-                            String(now.getMinutes()).padStart(2, '0');
-
-                        let logText = '';
-                        if (selectedType === '奖励') {
-                            logText = `🎁 奖励：${detail}`;
-                        } else if (selectedType === '处罚') {
-                            logText = `⚠️ 处罚：${detail}`;
-                        } else {
-                            logText = `📋 ${detail}`;
-                        }
-
-                        family.members[memberIdx].records.push({
-                            time: recordTime,
-                            text: logText,
-                            tag: selectedType,
-                            logType: selectedType,
-                            logTime: displayTime,
-                            logDetail: detail
-                        });
-                        updateCurrentFamilyData({ members: family.members });
-                        renderAll();
-                        overlay.classList.remove('open');
-                        if (currentDetailIdx === memberIdx) {
-                            openDetail(currentDetailIdx);
-                        }
-                        resolve();
-                    });
-
-                    cancelBtn.addEventListener('click', function() {
-                        overlay.classList.remove('open');
-                        resolve();
-                    });
-                });
-            }
-
-            function closeDetail() {
-                document.getElementById('detailOverlay').classList.remove('open');
-                currentDetailIdx = -1;
-            }
-
-            document.getElementById('closeDetailBtn').addEventListener('click', closeDetail);
-            document.getElementById('detailOverlay').addEventListener('click', function(e) {
-                if (e.target === this) closeDetail();
-            });
-
-            // ----- 事件绑定 -----
-            // 家族切换
-            document.getElementById('familySelect').addEventListener('change', function() {
-                setCurrentFamily(this.value);
-            });
-
-            // 新建家族
-            document.getElementById('addFamilyBtn').addEventListener('click', async function() {
-                const name = await showPrompt('请输入新家族名称：', '我的家族', '新建家族', '家族名称');
-                if (name !== null && name.trim()) {
-                    addFamily(name.trim());
-                }
-            });
-
-            // 删除家族
-            document.getElementById('delFamilyBtn').addEventListener('click', function() {
-                const family = getCurrentFamily();
-                if (family) {
-                    deleteFamily(family.id);
-                }
-            });
-
-            // 家族信息输入
-            document.getElementById('familyName').addEventListener('input', function() {
-                const family = getCurrentFamily();
-                if (family) {
-                    family.name = this.value;
-                    updateCurrentFamilyData({ name: family.name, info: family.info });
-                    // 更新下拉列表显示
-                    renderFamilySelect();
-                }
-            });
-            document.getElementById('familyInfo').addEventListener('input', function() {
-                const family = getCurrentFamily();
-                if (family) {
-                    family.info = this.value;
-                    updateCurrentFamilyData({ info: family.info });
-                }
-            });
-
-            // 身份组
-            document.getElementById('addGroupSubmit').addEventListener('click', async function() {
-                const family = getCurrentFamily();
-                if (!family) { await showAlert('请先创建家族'); return; }
-                const input = document.getElementById('newGroupInput');
-                const val = input.value.trim();
-                if (!val) { await showAlert('请输入组名'); return; }
-                if (family.groups.some(g => g.name === val)) { await showAlert('组已存在'); return; }
-                family.groups.push({ name: val, identities: [] });
-                input.value = '';
-                updateCurrentFamilyData({ groups: family.groups });
-                renderAll();
-            });
-            document.getElementById('addGroupBtn').addEventListener('click', function() {
-                document.getElementById('newGroupInput').focus();
-            });
-
-            // 成员身份组级联
-            document.getElementById('memberGroupSelect').addEventListener('change', function() {
-                const family = getCurrentFamily();
-                const identitySelect = document.getElementById('memberIdentitySelect');
-                const gName = this.value;
-                identitySelect.innerHTML = '<option value="">— 选择身份 —</option>';
-                if (family && gName) {
-                    getIdentitiesOfGroup(family, gName).forEach(id => {
-                        const opt = document.createElement('option');
-                        opt.value = id;
-                        opt.textContent = id;
-                        identitySelect.appendChild(opt);
-                    });
-                }
-            });
-
-            // 添加成员
-            document.getElementById('addMemberSubmit').addEventListener('click', async function() {
-                const family = getCurrentFamily();
-                if (!family) { await showAlert('请先创建家族'); return; }
-                const nameInput = document.getElementById('memberNameInput');
-                const groupSelect = document.getElementById('memberGroupSelect');
-                const identitySelect = document.getElementById('memberIdentitySelect');
-                const name = nameInput.value.trim();
-                if (!name) { await showAlert('请输入名字'); return; }
-                const group = groupSelect.value;
-                const identity = identitySelect.value;
-                if (!group) { await showAlert('请选择身份组'); return; }
-                if (!identity) { await showAlert('请选择身份'); return; }
-                if (family.members.some(m => m.name === name)) {
-                    const confirm = await showConfirm(`已有成员 “${name}”，继续？`, '重复成员');
-                    if (!confirm) return;
-                }
-                const newId = generateMemberId(family);
-                family.members.push({ id: newId, name, role: identity, records: [] });
-                nameInput.value = '';
-                updateCurrentFamilyData({ members: family.members });
-                renderAll();
-                await showAlert(`成员 "${name}" 已添加，ID: ${newId}`);
-            });
-            document.getElementById('addMemberBtn').addEventListener('click', function() {
-                document.getElementById('memberNameInput').focus();
-            });
-
-            // 筛选
-            document.getElementById('filterGroupSelect').addEventListener('change', function() {
-                renderMembers(getCurrentFamily());
-            });
-
-            // 数据迁移事件
-            document.getElementById('generateCodeBtn').addEventListener('click', generateCode);
-            document.getElementById('copyCodeBtn').addEventListener('click', copyCode);
-            document.getElementById('importCodeBtn').addEventListener('click', importDataFromCode);
-            document.getElementById('clearImportBtn').addEventListener('click', clearImportInput);
-
-            document.getElementById('dataCodeInput').addEventListener('paste', function() {
-                setTimeout(() => {
-                    const val = this.value.trim();
-                    if (val.length > 20) {
-                        setImportStatus('📋 已粘贴数据码，点击「导入为新家族」', 'info');
-                    }
-                }, 100);
-            });
-
-            // 导航切换
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    document.getElementById(this.dataset.tab).classList.add('active');
-                });
-            });
-
-            // 初始化
-            renderAll();
-            saveAppData();
-
-            // 定时保存
-            setInterval(() => {
-                const family = getCurrentFamily();
-                if (family) {
-                    const nameInput = document.getElementById('familyName');
-                    const infoInput = document.getElementById('familyInfo');
-                    if (nameInput.value !== family.name) {
-                        family.name = nameInput.value;
-                    }
-                    if (infoInput.value !== family.info) {
-                        family.info = infoInput.value;
-                    }
-                    // 保存但不重新渲染
-                    const idx = appData.families.findIndex(f => f.id === family.id);
-                    if (idx !== -1) {
-                        appData.families[idx] = { ...family };
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-                    }
-                }
-                document.getElementById('saveIndicator').textContent = '✅ 数据已保存 ' + new Date().toLocaleTimeString();
-            }, 5000);
-        })();
-    </script>
+            seats[k] = seats[j];
+            seats[j] = tmp;
+          }
+        }
+      }
+    }
+    if (!fixed) break;
+  }
+
+  return seats;
+}
+
+// ============ 生成主流程 ============
+function generate() {
+  const grade = document.getElementById('grade').value.trim() || '00';
+  const suffixLen = parseInt(document.getElementById('idSuffix').value) || 4;
+  const gridMode = document.getElementById('gridMode').checked;
+  const perRow = parseInt(document.getElementById('perRow').value) || 6;
+
+  if (!students.length) { alert('请先导入学生'); return; }
+  const totalCap = rooms.reduce((a, b) => a + b, 0);
+  if (totalCap < students.length) {
+    if (!confirm(`考场总容量 ${totalCap} 小于学生数 ${students.length}，最后一个考场会超员。继续？`)) return;
+  }
+
+  const roomAssign = assignRooms();
+  result = [];
+
+  roomAssign.forEach(room => {
+    const seats = arrangeSeats(room.members, gridMode, perRow);
+    seats.forEach((s, i) => {
+      if (!s) return;
+      const seatNo = i + 1;
+      const examNo = zfill(grade, 2) + zfill(s.班级, 2) +
+                     zfill(room.roomNo, 2) + zfill(seatNo, 2) +
+                     zfill(s.后四位, suffixLen);
+      result.push({
+        考号: examNo, 姓名: s.姓名, 学号: s.学号, 班级: s.班级,
+        考场号: room.roomNo, 座位号: seatNo
+      });
+    });
+  });
+
+  // 统计冲突
+  let conflictCount = 0;
+  const byRoom = {};
+  result.forEach(r => {
+    (byRoom[r.考场号] = byRoom[r.考场号] || []).push(r);
+  });
+  Object.values(byRoom).forEach(list => {
+    list.sort((a, b) => a.座位号 - b.座位号);
+    for (let i = 0; i < list.length - 1; i++) {
+      if (list[i].班级 === list[i + 1].班级) conflictCount++;
+    }
+  });
+
+  document.getElementById('exportBtn').disabled = false;
+
+  const gs = document.getElementById('genStatus');
+  if (conflictCount === 0) {
+    showStatus(gs, `生成成功！共 ${result.length} 条，无相邻同班冲突。`, 'ok');
+  } else {
+    showStatus(gs, `生成完成，共 ${result.length} 条。注意：仍有 ${conflictCount} 处左右相邻同班。`, 'warn');
+  }
+  document.getElementById('genSummary').innerHTML =
+    `考场数：<b>${rooms.length}</b>，学生数：<b>${result.length}</b>`;
+
+  renderResult();
+}
+
+// ============ 渲染结果 ============
+function renderResult() {
+  const card = document.getElementById('resultCard');
+  const tbody = document.querySelector('#resultTable tbody');
+  tbody.innerHTML = '';
+  const sorted = result.slice().sort((a, b) =>
+    a.考场号 - b.考场号 || a.座位号 - b.座位号);
+  sorted.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.考号}</td><td>${r.姓名}</td><td>${r.学号}</td>
+                    <td>${r.班级}</td><td>${r.考场号}</td><td>${r.座位号}</td>`;
+    tbody.appendChild(tr);
+  });
+  card.classList.remove('hidden');
+}
+
+// ============ 导出Excel（WebCat 兼容版）============
+function exportExcel() {
+  if (!result.length) { alert('请先生成考号'); return; }
+
+  // 显示下载遮罩
+  const mask = document.getElementById('downloadMask');
+  const maskText = document.getElementById('maskText');
+  maskText.textContent = '正在准备下载，请稍候…';
+  mask.style.display = 'flex';
+
+  // 用 setTimeout 让遮罩先渲染出来，避免卡顿
+  setTimeout(function () {
+    try {
+      // 1. 生成数据
+      const sorted = result.slice().sort((a, b) =>
+        a.考场号 - b.考场号 || a.座位号 - b.座位号);
+      const ws = XLSX.utils.json_to_sheet(sorted, {
+        header: ['考号', '姓名', '学号', '班级', '考场号', '座位号']
+      });
+      ws['!cols'] = [{ wch: 16 }, { wch: 10 }, { wch: 14 },
+                     { wch: 8 }, { wch: 8 }, { wch: 8 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '考号表');
+
+      // 2. 转为二进制（关键：不用 writeFile，避免闪退）
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+      // 3. 创建 Blob
+      const blob = new Blob([wbout], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const fileName = '考号生成结果_' + timestamp() + '.xlsx';
+
+      // 4. 用 a 标签触发下载（WebCat 会交给外部浏览器）
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.target = '_blank';   // 关键：强制外部打开
+      a.rel = 'noopener';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+
+      // 5. 清理
+      setTimeout(function () {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        maskText.textContent = '下载已开始，请到浏览器或文件管理器查看';
+        setTimeout(function () {
+          mask.style.display = 'none';
+        }, 1500);
+      }, 800);
+
+    } catch (err) {
+      mask.style.display = 'none';
+      alert('导出失败：' + err.message + '\n请确认 WebCat 已开启"支持打开外部应用"。');
+    }
+  }, 200);
+}
+
+function timestamp() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) +
+         '_' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+}
+
+// ============ 初始化 ============
+renderRooms();
+</script>
 </body>
 </html>
